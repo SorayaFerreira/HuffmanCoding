@@ -1,5 +1,5 @@
 #include <cstdio>
-//#include <climits>
+#include <climits>
 #include <string>
 #include <algorithm>
 
@@ -31,7 +31,7 @@ public:
     void escreve(const string &prefixo = "", int i = 0);
     void insere(int p, int id);
     Processo consulta_maxima();
-    Processo extrai_maxima();
+    //Processo extrai_maxima();
     void altera_prioridade(int i, int p);
 
 private:
@@ -48,7 +48,7 @@ private:
     void sobe(int i);
 };
 
-int main(void)
+/*int main(void)
 {
     Heap h; // construtor Heap()
 
@@ -100,7 +100,7 @@ int main(void)
     h.escreve();
 
     return 0;
-}
+}*/
 
 Processo::Processo() {}
 
@@ -132,7 +132,7 @@ void Heap::escreve_niveis() {
     {
         // Equivalente a for (unsigned i = 0; i < S.size(); i++) { printf("%d ",
         // S[i]);
-        printf("%d ", S[i]);
+        printf("%d ", S[i].p);
         if (++escritos == fim_nivel)
         {
             putchar('\n');
@@ -152,7 +152,7 @@ void Heap::escreve(const string &prefixo, int i) {
         printf("%s", prefixo.c_str());
         printf(ehEsquerdo and temIrmao ? "├──" : "└──");
 
-        printf("%d\n", S[i]);
+        printf("%d\n", S[i].p);
 
         escreve(prefixo + (ehEsquerdo ? "│   " : "    "), esquerdo(i));
         escreve(prefixo + (ehEsquerdo ? "│   " : "    "), direito(i));
@@ -199,16 +199,17 @@ void Heap::sobe(int i)
 }
 Processo Heap::consulta_maxima() { return S[0]; }
 
-Processo Heap::extrai_maxima() {
+/*Processo Heap::extrai_maxima() {
     Processo maior;
     if (n > 0) {
         maior = S[0];
         S[0] = S[--n];
         desce(0);
         return maior;
-    } else
-        return;
-}
+    } else {
+        return INT_MIN;
+    }
+}*/
 
 void Heap::altera_prioridade(int i, int p) {
 

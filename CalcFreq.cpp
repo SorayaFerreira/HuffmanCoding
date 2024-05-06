@@ -1,16 +1,14 @@
-//
-
 #include <cstdio>
 #include <cstdlib>
 
 void calculateFrequency();
 
 
-int main() {
+/*int main() {
 
 	calculateFrequency();
 	return 0;
-}
+}*/
 
 
 void calculateFrequency() {
