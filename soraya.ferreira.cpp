@@ -11,10 +11,20 @@
 //   ./programa c texto.txt texto.huff
 //   ./programa d texto.huff texto-descompactado.txt
 
-int main() {
+int main(int argc, char *argv[]) {
+	// argv[0] = nomeDoPrograma
+	// argv[argc] = NULL;
 
+	FILE *arquivo1, *arquivo2;
+	arquivo1 = fopen(argv[2], "r+");
+	arquivo2 = fopen(argv[3], "w+");
 
-
+	if(*argv[1] == 'c') {
+		compacta(arquivo1, arquivo2);
+		
+	} else if(*argv[1] == 'd') {
+		descompacta(arquivo1, arquivo2);
+	}
 	return 0;
 }
 
