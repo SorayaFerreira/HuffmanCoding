@@ -40,4 +40,27 @@ public:
   size_t size();        // Tamanho da heap
   void insert(Node *n); // Inserir elemento
   Node *extract();      // Remover (menor) elemento
+  void troca(unsigned int i, unsigned int j); 
 };
+
+MinHeap::MinHeap(){}
+MinHeap::~MinHeap(){
+  delete [] v;
+}
+
+void up(unsigned int i) { //Função Sobe
+
+  while(v[parent(i)].f > v[i].f) {
+    troca(i, parent(i));
+    i = parent(i);
+  }
+}
+void MinHeap::troca(unsigned int i, unsigned int j) {
+  Node aux = v[i];
+  v[i] = v[j];
+  v[j] = aux;
+}
+
+unsigned int MinHeap::parent(unsigned int i) {
+ return(i-1) / 2;
+}
