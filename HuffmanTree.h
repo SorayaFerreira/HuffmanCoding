@@ -15,10 +15,10 @@ private:
 public:
   Node(int f, uint8_t c, Node *l = nullptr, Node *r = nullptr); // Construtor
   Node(int f = 0, Node *l = nullptr, Node *r = nullptr);        // Construtor
-  int freq() const;     // Devolve a frequência do caractere
+    
   uint8_t code() const; // Devolve o código do caractere
-  Node *left();         // Devolve o filho esquerdo
-  Node *right();        // Devolve o filho direito
+  Node *left();         // Devolve o filho esquerdo  ;)
+  Node *right();        // Devolve o filho direito    ;)
   bool leaf() const;    // Devolve true se é folha e false caso contrário
 };
 
@@ -45,22 +45,60 @@ public:
 
 MinHeap::MinHeap(){}
 MinHeap::~MinHeap(){
-  delete [] v;
+  delete [] &v;
 }
 
-void up(unsigned int i) { //Função Sobe
+unsigned int MinHeap::left(unsigned int i) {
+  return 2 * (i + 1) - 1;
+}
+
+unsigned int MinHeap::right(unsigned int i) {
+  return 2 * (i + 1);
+}
+
+unsigned int MinHeap::parent(unsigned int i)
+{
+  return (i - 1) / 2;
+}
+
+void MinHeap::troca(unsigned int i, unsigned int j) {
+  Node aux = *v[i];
+  *v[i] = *v[j];
+  *v[j] = aux;
+}
+
+void MinHeap::up(unsigned int i) { //Função Sobe
 
   while(v[parent(i)].f > v[i].f) {
     troca(i, parent(i));
     i = parent(i);
   }
 }
-void MinHeap::troca(unsigned int i, unsigned int j) {
-  Node aux = v[i];
-  v[i] = v[j];
-  v[j] = aux;
+
+Node * Node::right() {
+  return this->r;
 }
 
-unsigned int MinHeap::parent(unsigned int i) {
- return(i-1) / 2;
+Node * Node::left() {
+  return this->l;
+}
+
+void MinHeap::down(unsigned int i) {
+  unsigned int e, d, menor;
+  e = left(i);
+  d = right(i);
+  if(e < size() && v[e].f < v[i].f)
+    menor = e;
+  else
+    menor = i;
+  if(d < size() && v[d].f < v[menor].f)
+    menor = d;
+  if(menor != i) {
+    troca(i, menor);
+    down(menor);
+  }
+}
+
+int Node::freq() const {
+  return this->f;
 }
