@@ -52,7 +52,9 @@ MinHeap::~MinHeap(){
   }
 }
 
-size_t MinHeap::size() {}
+size_t MinHeap::size() {
+  return v.size();
+}
 
 unsigned int MinHeap::left(unsigned int i) {
   return 2 * (i + 1) - 1;
@@ -124,13 +126,15 @@ bool Node::leaf() const {
     return false;
 }
 
+uint8_t Node::code() const {
+  return this->c;
+}
+
 void MinHeap::insert(Node *n) {
   v.push_back(n);
   up(v.size()-1);
-}
 
-uint8_t Node::code() const {
-  return this->c;
+  //atribuir os filhos esquerdo e direito.
 }
 
 //Cria o nó para ser utilizado na min heap
@@ -139,4 +143,6 @@ Node::Node(int f, uint8_t c, Node *l = nullptr, Node *r = nullptr) :
 
 //Cria o nó intermediário utilizado na construção da árvore de Huffman
 Node::Node(int f = 0, Node *l = nullptr, Node *r = nullptr) :
-  f(f), l(l), r(r) {}
+  f(f), l(l), r(r) {
+    this->c = NULL;
+  }
