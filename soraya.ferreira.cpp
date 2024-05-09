@@ -6,7 +6,7 @@
 *
 */
 #include <stdio.h>
-#include "HuffmanTree.h"
+//#include "HuffmanTree.h"
 
 //   ./programa c texto.txt texto.huff
 //   ./programa d texto.huff texto-descompactado.txt
