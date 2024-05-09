@@ -90,6 +90,8 @@ Node * Node::left() {
 }
 
 void MinHeap::down(unsigned int i) {
+//Garante as propriedades da min heap, descendo na árvore
+
   unsigned int e, d, menor;
   e = left(i);
   d = right(i);
@@ -131,8 +133,10 @@ uint8_t Node::code() const {
   return this->c;
 }
 
+//Cria o nó para ser utilizado na min heap
 Node::Node(int f, uint8_t c, Node *l = nullptr, Node *r = nullptr) : 
   f(f), c(c), l(l), r(r) {}
 
+//Cria o nó intermediário utilizado na construção da árvore de Huffman
 Node::Node(int f = 0, Node *l = nullptr, Node *r = nullptr) :
   f(f), l(l), r(r) {}
