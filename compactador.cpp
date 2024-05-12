@@ -10,7 +10,7 @@ class Bytes{ // classe para percorrer os Bytes do arquivo
     FILE * file;
 
     public:
-    Bytes(FILE * file){this->file = file;}
+    Bytes(FILE * file): file(file){}
     int obtem_byte();
 };
 
@@ -47,6 +47,8 @@ class No {
      // Método para verificar se é folha
     bool getFolha() {return this->folha;}
     void setFolha() {this->folha = true;}
+
+    void imprime_No(int byte);
 };
 
 int main(){
@@ -58,9 +60,20 @@ int main(){
         vetor_frequencia[i] = nullptr;
     }
 
+    printf("vetor inicializado\n");
+
     // ponteiro de arquivo 
     FILE * leitor;
     leitor = fopen("original.txt", "rb"); //ponteiro de arquivo apontando para arquivo desejado
+
+    printf("Leitor inicializado\n");
+
+    if (!leitor) { // verifica se o arquivo foi aberto corretamente, caso contrário, imprime a mensagem de erro.
+        fprintf(stderr, "Erro ao abrir o arquivo.\n"); 
+        return 1;
+    }
+
+    printf("leitor sem erros\n");
 
     int byte; // variável byte;
 
@@ -72,13 +85,31 @@ int main(){
             vetor_frequencia[byte] = new No(); // criando objeto "No" em novo byte
             vetor_frequencia[byte]->setFolha(); // ele será uma folha (usado mais para frente)
             vetor_frequencia[byte]->setFrequencia(1); // sua frequencia passa a ser "1" (0+1)
+
+            printf("Nó %d incluso com sucesso\n", byte);
         }
         else
         {
             vetor_frequencia[byte]->setFrequencia(1); // Caso contrário, apenas aumenta em 1 sua frequencia
+
+            printf("Nó %d incrementado com sucesso\n", byte);
         }
     }
 
+    printf("\n -=-=-=-=-=-=-=- Bytes distribuídos com sucesso -=-=-=-=--=--==-=-\n\n");
+
+    for (int i = 0; i < 256; i++) {
+        if(vetor_frequencia[i]!=nullptr) // caso o objeto No exista, ele é impresso
+        {
+            vetor_frequencia[i]->imprime_No(i); 
+        }
+
+        delete vetor_frequencia[i]; // libera espaço da memória
+    }
+
+
+
+    fclose(leitor); //fecha o leitor
 
     return 0;
 }
@@ -89,4 +120,11 @@ int Bytes::obtem_byte(){ // Método usado para extrair os Bytes do arquivo
 
     if(fread(&byte,1,1,file) == 0){return -1;} // caso não houver mais bytes, retorna "-1", quebrando o "while" da main.
     return byte;
+}
+
+void No::imprime_No(int byte){
+    printf("Byte: %d\n", byte);
+    printf("Frequencia: %d\n", this->frequencia);
+    printf("É folha : %s\n\n", this->folha ? "Sim" : "Não");
+
 }
