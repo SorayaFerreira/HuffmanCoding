@@ -1,9 +1,8 @@
 #include <cstdint>
 #include <cstdio>
+#include <vector>
 
-/* Neste código será feita a implementação de: ler os bytes de um determinado arquivo
-usar um vetor de frequencia( de 0 a 255) para guardar quantas vezes os bytes aparecem, e em seguida guardar
-no vetor índice quais os bytes que tivemos, em seguida fazer nós ultilizando essas informações*/
+using namespace std;
 
 class Bytes{ // classe para percorrer os Bytes do arquivo
     private:
@@ -21,12 +20,13 @@ class No {
     int frequencia; // - quantas vezes o byte aparece
     No * esq; // - filho esquerdo
     No * dir; // - filho direito
+    No * pai; // pai do no 
     uint8_t compacto; // - o código gerado para ser o byte no arquivo compactado
     bool folha; // - indicador se o nó é galho da arvore ou uma folha
 
     public:
 
-    No() : frequencia(0), esq(nullptr), dir(nullptr), compacto(0), folha(false) {}
+    No() : frequencia(0), esq(nullptr), dir(nullptr), pai(nullptr), compacto(0), folha(false) {}
 
     // Métodos para obter e definir a frequência
     int getFrequencia() { return this->frequencia;}
@@ -34,11 +34,11 @@ class No {
 
     // Métodos para obter e definir o filho esquerdo
     No * getFilho_esquerdo() {return this->esq;}
-    void setFilho_esquerdo(No * filho) { this->esq = filho;}
+    void setFilho_esquerdo(No * &filho, No * &novo_pai) { this->esq = filho; esq->pai = novo_pai;}
 
     // Métodos para obter e definir o filho direito
     No * getFilho_direito() {return this->dir;}
-    void setFilho_direito(No * filho) {this->dir = filho;}
+    void setFilho_direito(No * &filho, No * &novo_pai) {this->dir = filho; dir->pai = novo_pai;}
 
     // Métodos para obter e definir o valor compactado
     uint8_t getCompacto() {return this->compacto;}
@@ -53,12 +53,8 @@ class No {
 
 int main(){
 
-    No * vetor_frequencia[256]; // vetor de ponteiros para No (objetos)
-
-    // Inicializando o vetor com nullptr
-    for (int i = 0; i < 256; i++) {
-        vetor_frequencia[i] = nullptr;
-    }
+    vector<No*> vetor_frequencia(256, nullptr); // vetor de ponteiros para No (objetos)
+    vector<No*> indice;
 
     printf("vetor inicializado\n");
 
@@ -86,6 +82,8 @@ int main(){
             vetor_frequencia[byte]->setFolha(); // ele será uma folha (usado mais para frente)
             vetor_frequencia[byte]->setFrequencia(1); // sua frequencia passa a ser "1" (0+1)
 
+            indice.push_back(vetor_frequencia[byte]);
+
             printf("Nó %d incluso com sucesso\n", byte);
         }
         else
@@ -95,6 +93,8 @@ int main(){
             printf("Nó %d incrementado com sucesso\n", byte);
         }
     }
+
+
 
     printf("\n -=-=-=-=-=-=-=- Bytes distribuídos com sucesso -=-=-=-=--=--==-=-\n\n");
 
@@ -127,4 +127,68 @@ void No::imprime_No(int byte){
     printf("Frequencia: %d\n", this->frequencia);
     printf("É folha : %s\n\n", this->folha ? "Sim" : "Não");
 
+}
+
+void min_heap(vector<No*> &vetor){
+
+    int n = vetor.size();
+    for (int i = n / 2 - 1; i >= 0; --i) {
+        desce(vetor, i, n);
+    }
+
+    for (int i = n - 1; i > 0; i--) {
+        troca(vetor[0], vetor[i]);
+        desce(vetor, 0, i);
+    }
+
+}
+
+void desce(vector<No*>& vetor, int pai, int tamanho) {
+    int filho_esq = esquerdo(pai);
+    int filho_dir = direito(pai);
+    int menor = pai;
+
+    if (filho_esq < tamanho && vetor[filho_esq]->getFrequencia() < vetor[pai]->getFrequencia()) {
+        menor = filho_esq;
+    }
+
+    if (filho_dir < tamanho && vetor[filho_dir]->getFrequencia() < vetor[menor]->getFrequencia()) {
+        menor = filho_dir;
+    }
+
+    if (menor != pai) {
+        troca(vetor[pai], vetor[menor]);
+        desce(vetor, menor, tamanho);
+    }
+}
+
+void sobe(vector<No*>& vetor, int i)
+{
+while (vetor[pai_Heap(i)]->getFrequencia() > vetor[i]->getFrequencia()) {
+troca(vetor[i], vetor[pai_Heap(i)]);
+i = pai_Heap(i);
+}
+}
+
+
+void troca(No* & ponteiro_1,No* & ponteiro_2){
+    No* aux;
+    aux = ponteiro_1;
+    ponteiro_1 = ponteiro_2;
+    ponteiro_2 = aux;
+}
+
+int pai_Heap(int i)
+{
+return (i - 1) / 2;
+}
+
+int direito(int i)
+{
+return 2 * (i + 1);
+}
+
+int esquerdo(int i)
+{
+return 2 * (i + 1) - 1;
 }
