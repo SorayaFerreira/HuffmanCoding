@@ -51,6 +51,109 @@ class No {
     void imprime_No(int byte);
 };
 
+int pai_Heap(int i)
+{
+return (i - 1) / 2;
+}
+
+int direito(int i)
+{
+return 2 * (i + 1);
+}
+
+int esquerdo(int i)
+{
+return 2 * (i + 1) - 1;
+}
+
+void troca(No* & ponteiro_1,No* & ponteiro_2){
+    No* aux;
+    aux = ponteiro_1;
+    ponteiro_1 = ponteiro_2;
+    ponteiro_2 = aux;
+}
+
+void imprime_arvore(No * raiz){
+    if(raiz == nullptr){return;}
+
+    raiz->imprime_No(0);
+
+
+    imprime_arvore(raiz->getFilho_esquerdo());
+    imprime_arvore(raiz->getFilho_direito());
+
+}
+
+
+void desce(vector<No*>& vetor, int pai, int tamanho) {
+    int filho_esq = esquerdo(pai);
+    int filho_dir = direito(pai);
+    int menor = pai;
+
+    if (filho_esq < tamanho && vetor[filho_esq]->getFrequencia() < vetor[pai]->getFrequencia()) {
+        menor = filho_esq;
+    }
+
+    if (filho_dir < tamanho && vetor[filho_dir]->getFrequencia() < vetor[menor]->getFrequencia()) {
+        menor = filho_dir;
+    }
+
+    if (menor != pai) {
+        troca(vetor[pai], vetor[menor]);
+        desce(vetor, menor, tamanho);
+    }
+}
+
+void min_heap(vector<No*> & vetor){
+
+    int n = vetor.size();
+    for (int i = n / 2 - 1; i >= 0; --i) {
+        desce(vetor, i, n);
+    }
+
+    for (int i = n - 1; i > 0; i--) {
+        troca(vetor[0], vetor[i]);
+        desce(vetor, 0, i);
+    }
+
+}
+
+
+
+void sobe(vector<No*>& vetor, int i)
+{
+while (vetor[pai_Heap(i)]->getFrequencia() > vetor[i]->getFrequencia()) {
+troca(vetor[i], vetor[pai_Heap(i)]);
+i = pai_Heap(i);
+}
+}
+
+
+
+
+void cria_arvore(vector<No*> & vetor)
+{
+    min_heap(vetor);
+
+    while (vetor.size()>1)
+    {
+        No * novo = new No();
+
+        novo->setFilho_esquerdo(vetor[0],novo);
+        vetor.erase(vetor.begin());
+
+        novo->setFilho_direito(vetor[0],novo);
+        vetor.erase(vetor.begin());
+
+        novo->setFrequencia((novo->getFilho_direito()->getFrequencia()) + (novo->getFilho_esquerdo()->getFrequencia()));
+        
+        vetor.push_back(novo);
+
+        sobe(vetor, vetor.size() - 1);
+    }
+    
+}
+
 int main(){
 
     vector<No*> vetor_frequencia(256, nullptr); // vetor de ponteiros para No (objetos)
@@ -94,20 +197,22 @@ int main(){
         }
     }
 
-
-
     printf("\n -=-=-=-=-=-=-=- Bytes distribuídos com sucesso -=-=-=-=--=--==-=-\n\n");
 
-    for (int i = 0; i < 256; i++) {
+
+    cria_arvore(indice);
+
+    imprime_arvore(indice[0]);
+
+
+    /*for (int i = 0; i < 256; i++) {
         if(vetor_frequencia[i]!=nullptr) // caso o objeto No exista, ele é impresso
         {
             vetor_frequencia[i]->imprime_No(i); 
         }
 
         delete vetor_frequencia[i]; // libera espaço da memória
-    }
-
-
+    }*/
 
     fclose(leitor); //fecha o leitor
 
@@ -125,70 +230,7 @@ int Bytes::obtem_byte(){ // Método usado para extrair os Bytes do arquivo
 void No::imprime_No(int byte){
     printf("Byte: %d\n", byte);
     printf("Frequencia: %d\n", this->frequencia);
-    printf("É folha : %s\n\n", this->folha ? "Sim" : "Não");
+    printf("É folha : %s\n", this->folha ? "Sim" : "Nao");
 
 }
 
-void min_heap(vector<No*> &vetor){
-
-    int n = vetor.size();
-    for (int i = n / 2 - 1; i >= 0; --i) {
-        desce(vetor, i, n);
-    }
-
-    for (int i = n - 1; i > 0; i--) {
-        troca(vetor[0], vetor[i]);
-        desce(vetor, 0, i);
-    }
-
-}
-
-void desce(vector<No*>& vetor, int pai, int tamanho) {
-    int filho_esq = esquerdo(pai);
-    int filho_dir = direito(pai);
-    int menor = pai;
-
-    if (filho_esq < tamanho && vetor[filho_esq]->getFrequencia() < vetor[pai]->getFrequencia()) {
-        menor = filho_esq;
-    }
-
-    if (filho_dir < tamanho && vetor[filho_dir]->getFrequencia() < vetor[menor]->getFrequencia()) {
-        menor = filho_dir;
-    }
-
-    if (menor != pai) {
-        troca(vetor[pai], vetor[menor]);
-        desce(vetor, menor, tamanho);
-    }
-}
-
-void sobe(vector<No*>& vetor, int i)
-{
-while (vetor[pai_Heap(i)]->getFrequencia() > vetor[i]->getFrequencia()) {
-troca(vetor[i], vetor[pai_Heap(i)]);
-i = pai_Heap(i);
-}
-}
-
-
-void troca(No* & ponteiro_1,No* & ponteiro_2){
-    No* aux;
-    aux = ponteiro_1;
-    ponteiro_1 = ponteiro_2;
-    ponteiro_2 = aux;
-}
-
-int pai_Heap(int i)
-{
-return (i - 1) / 2;
-}
-
-int direito(int i)
-{
-return 2 * (i + 1);
-}
-
-int esquerdo(int i)
-{
-return 2 * (i + 1) - 1;
-}
