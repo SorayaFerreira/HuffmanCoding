@@ -1,13 +1,5 @@
 #include "biblioteca.h"
 
-int Bytes::obtem_byte(){ // Método usado para extrair os Bytes do arquivo
-
-    uint8_t byte;
-
-    if(fread(&byte,1,1,file) == 0){return -1;} // caso não houver mais bytes, retorna "-1", quebrando o "while" da main.
-    return byte;
-}
-
 // Métodos para obter e definir a frequência
 int  No::getFrequencia() { return this->frequencia;}
 void No::setFrequencia(int freq) {this->frequencia += freq;}
@@ -32,6 +24,71 @@ void No::imprime_No(int byte){
     printf("Byte: %d\n", byte);
     printf("Frequencia: %d\n", this->frequencia);
     printf("É folha : %s\n", this->folha ? "Sim" : "Nao");
+}
+
+Compactador::Compactador(FILE * file): leitor(file), vetor_frequencia(256,nullptr)
+{
+    this->distribui_Byte();
+    this->cria_Arvore();
+    imprime_arvore(this->indice[0]);
+
+}
+
+int Compactador::obtem_Byte()
+{
+    uint8_t byte;
+
+    if(fread(&byte,1,1,this->leitor) == 0){return -1;} // caso não houver mais bytes, retorna "-1", quebrando o "while" do distribuidor.
+    return byte;
+}
+
+void Compactador::distribui_Byte()
+{
+    int byte; // variável byte
+
+    while (((byte = this->obtem_Byte()) >= 0) && (byte < 256)){ //percorrendo os bytes do arquivo
+
+            if(this->vetor_frequencia[byte] == nullptr){ //caso não houver um objeto da classe "No" com determinado byte, criar.
+                this->vetor_frequencia[byte] = new No(); // criando objeto "No" em novo byte
+                this->vetor_frequencia[byte]->setFolha(); // ele será uma folha (usado mais para frente)
+                this->vetor_frequencia[byte]->setFrequencia(1); // sua frequencia passa a ser "1" (0+1)
+
+                this->indice.push_back(this->vetor_frequencia[byte]);
+
+                printf("Nó %d incluso com sucesso\n", byte);
+            }
+            else
+            {
+                this->vetor_frequencia[byte]->setFrequencia(1); // Caso contrário, apenas aumenta em 1 sua frequencia
+
+                printf("Nó %d incrementado com sucesso\n", byte);
+            }
+        }
+
+    printf("\n -=-=-=-=-=-=-=- Bytes distribuídos com sucesso -=-=-=-=--=--==-=-\n\n");   
+}
+
+void Compactador::cria_Arvore()
+{
+    min_heap(this->indice);
+
+    while (this->indice.size()>1)
+    {
+        No * novo = new No();
+
+        novo->setFilho_esquerdo(this->indice[0],novo);
+        retira_Minimo(this->indice);
+
+        novo->setFilho_direito(this->indice[0],novo);
+        retira_Minimo(this->indice);
+
+        novo->setFrequencia((novo->getFilho_direito()->getFrequencia()) + (novo->getFilho_esquerdo()->getFrequencia()));
+        
+        this->indice.push_back(novo);
+
+        sobe(this->indice,this->indice.size() -1);
+    }
+    
 }
 
 int pai_Heap(int i)
@@ -95,35 +152,6 @@ void min_heap(vector<No*> & vetor){
         desce(vetor, i, n);
     }
 
-    printf("\n\n -=-=-=-=-- depois da min_heap 6 -=-=-=-=-\n\n");
-
-    imprime_heap(vetor);
-
-    for (int i = n - 1; i > 0; i--) {
-        troca(vetor[0], vetor[i]);
-        desce(vetor, 0, i);
-
-        printf("\n\n -=-=-=-=-- durante o sort -=-=-=-=-\n\n");
-
-        imprime_heap(vetor);
-        
-    }
-
-    for (int i = n -1; i >= 0; i--)
-    {
-        vetor.push_back(vetor[i]);
-        
-    }
-    
-    for(; n > 0; n--)
-    {
-        vetor.erase(vetor.begin());
-    }
-
-    printf("\n\n -=-=-=-=-- depois do sort -=-=-=-=-\n\n");
-
-    imprime_heap(vetor);
-
 }
 
 void sobe(vector<No*>& vetor, int i)
@@ -132,68 +160,6 @@ while (vetor[pai_Heap(i)]->getFrequencia() > vetor[i]->getFrequencia()) {
 troca(vetor[i], vetor[pai_Heap(i)]);
 i = pai_Heap(i);
 }
-}
-
-void cria_arvore(vector<No*> & vetor)
-{
-    printf("\nantes da ordenação\n");
-
-    imprime_heap(vetor);
-
-    min_heap(vetor);
-
-    while (vetor.size()>1)
-    {
-        No * novo = new No();
-
-        printf("\n-=-=-=-=-=-=-=-- Antes da operacao -=-=-=-=-=-=-=--\n");
-
-        imprime_heap(vetor);
-
-        novo->setFilho_esquerdo(vetor[0],novo);
-        retira_Minimo(vetor);
-
-        novo->setFilho_direito(vetor[0],novo);
-        retira_Minimo(vetor);
-
-        novo->setFrequencia((novo->getFilho_direito()->getFrequencia()) + (novo->getFilho_esquerdo()->getFrequencia()));
-        
-        vetor.push_back(novo);
-
-        printf("\n-=-=-=-=-=-=-=-- depois da operacao -=-=-=-=-=-=-=--\n");
-
-        imprime_heap(vetor);
-
-        sobe(vetor,vetor.size() -1);
-
-        //min_heap(vetor);
-
-    }
-    
-}
-
-void distribui_Byte(vector<No*> &vetor_frequencia,vector<No*> &indice, Bytes &entrada)
-{
-    int byte; // variável byte
-
-    while (((byte = entrada.obtem_byte()) >= 0) && (byte < 256)){ //percorrendo os bytes do arquivo
-
-            if(vetor_frequencia[byte] == nullptr){ //caso não houver um objeto da classe "No" com determinado byte, criar.
-                vetor_frequencia[byte] = new No(); // criando objeto "No" em novo byte
-                vetor_frequencia[byte]->setFolha(); // ele será uma folha (usado mais para frente)
-                vetor_frequencia[byte]->setFrequencia(1); // sua frequencia passa a ser "1" (0+1)
-
-                indice.push_back(vetor_frequencia[byte]);
-
-                printf("Nó %d incluso com sucesso\n", byte);
-            }
-            else
-            {
-                vetor_frequencia[byte]->setFrequencia(1); // Caso contrário, apenas aumenta em 1 sua frequencia
-
-                printf("Nó %d incrementado com sucesso\n", byte);
-            }
-        }
 }
 
 void retira_Minimo(vector<No*> &vetor)

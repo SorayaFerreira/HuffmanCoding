@@ -7,14 +7,6 @@
 
 using namespace std;
 
-class Bytes{ // classe para percorrer os Bytes do arquivo
-    private:
-    FILE * file;
-
-    public:
-    Bytes(FILE * file): file(file){}
-    int obtem_byte();
-};
 
 class No {
     private:
@@ -53,6 +45,20 @@ class No {
     void imprime_No(int byte);
 };
 
+class Compactador
+{
+   private:
+   vector<No*> vetor_frequencia;//{256, nullptr}; // vetor de ponteiros para No (objetos)
+   vector<No*> indice;
+   FILE * leitor;
+
+   public:
+   Compactador(FILE * file);
+   int obtem_Byte();
+   void distribui_Byte();
+   void cria_Arvore();
+};
+
 int pai_Heap(int i);
 
 int direito(int i);
@@ -71,12 +77,6 @@ void min_heap(vector<No*> & vetor);
 
 void sobe(vector<No*>& vetor, int i);
 
-void cria_arvore(vector<No*> & vetor);
-
-void distribui_Byte(vector<No*> &vetor_frequencia,vector<No*> &indice, Bytes &entrada);
-
 void retira_Minimo(vector<No*> &vetor);
-
-
 
 #endif //NO_H
