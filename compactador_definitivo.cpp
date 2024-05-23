@@ -43,48 +43,48 @@ class No {
     bool getFolha();
     void setFolha();
 
-    uint8_t getByte_letra();
-    void setByte_letra(uint8_t x);
+    uint8_t getByte_letra(); //retorna o Byte (letra) que o nó representa
+    void setByte_letra(uint8_t x);//determina o Byte (letra) que o nó representa
 
-    void imprime_No(int byte);
+    void imprime_No(int byte);// imprime o nó (para testes)
 
-    void percorre_Arvore(No * raiz, Compactador & compact);
+    void percorre_Arvore(No * raiz, Compactador & compact); //Percorre a arvore a partir do No raiz, estabelecendo seus dados
 };
 
 class Compactador
 {
    private:
    vector<No*> vetor_frequencia;//{256, nullptr}; // vetor de ponteiros para No (objetos)
-   vector<No*> indice;
+   vector<No*> indice; // vetor de indice, receberá os nós ultilizados na compactacao do arquivo
 
-   FILE * leitor;
-   FILE * escritor;
+   FILE * leitor; // ponteiro leitor
+   FILE * escritor; // ponteiro que escreverá o arquivo compactado
 
    uint8_t alfabeto_k; // número de letras no alfabeto
    int letras_t; // número de letras impressas 
 
-   vector<uint8_t> codigo_Arvore;
-   vector<uint8_t> codigo_No;
+   vector<uint8_t> codigo_Arvore; // vetor que guardará o codigo da arvore em binario
+   vector<uint8_t> codigo_No; // vetor que guardara o codigo que o no compactado representa
 
-   uint8_t buffer[8];
-   uint8_t buffer_elementos;
+   uint8_t buffer[8]; // vetor de buffer para auxiliar na escrita do arquivo compactado
+   uint8_t buffer_elementos; // quantidade de elementos inseridos no buffer
 
    public:
-   Compactador(FILE * leitor, FILE * escritor);
-   int obtem_Byte();
-   void distribui_Byte();
-   void cria_Arvore();
+   Compactador(FILE * leitor, FILE * escritor); // construtor
+   int obtem_Byte(); // obtem byte do arquivo lido
+   void distribui_Byte(); // cria os devidos Nos
+   void cria_Arvore(); // cria a arvore de huffman
 
-   void adiciona_codigo_Arvore(uint8_t x);
-   void adiciona_codigo_No(uint8_t x);
-   void remove_codigo_No();
-   void escreve_letras_t();
-   vector<uint8_t> devolve_Codigo_No();
-   vector<uint8_t> devolve_Codigo_Arvore();
-   void escreve_Byte(uint8_t byte);
-   void descarrega();
-   void escreve_Vector(vector<uint8_t> vector);
-   void escreve_Arquivo_Compactado();
+   void adiciona_codigo_Arvore(uint8_t x); // usado ao percorrer a arvore, para settar os numeros
+   void adiciona_codigo_No(uint8_t x); // cria o codigo do No
+   void remove_codigo_No(); // remove o ultimo elemento do No ao retornar da recursao
+   void escreve_letras_t(); // escreve a quantidade de letras do arquivo original serão lidas no compactado
+   vector<uint8_t> devolve_Codigo_No(); // devolve o vector de codigo do no
+   vector<uint8_t> devolve_Codigo_Arvore(); // retorne o vector de codigo da arvore
+   void escreve_Byte(uint8_t byte); // escreve byte no arquivo compactado
+   void descarrega(); // escreve os elementos do buffer no arquivo compactado
+   void escreve_Vector(vector<uint8_t> vector); // escreve os elementos do vecto no buffer
+   void escreve_Arquivo_Compactado(); // escreve o codigo da arvore e em seguida as letras codificadas no arquivo compactado
 };
 
 int pai_Heap(int i);
@@ -225,7 +225,7 @@ void Compactador::escreve_Arquivo_Compactado()
 void Compactador::escreve_Vector(vector<uint8_t> vector)
 {
 
-    for(uint8_t i; i < vector.size(); i++)
+    for(uint8_t i = 0 ; i < vector.size(); i++)
     {
         this->buffer[this->buffer_elementos++] = vector[i];
 
