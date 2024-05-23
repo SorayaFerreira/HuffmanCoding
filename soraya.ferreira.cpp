@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
 	// argv[argc] = NULL;
 
 	FILE *arquivo1, *arquivo2;
-	arquivo1 = fopen(argv[2], "r+");
-	arquivo2 = fopen(argv[3], "w+");
+	arquivo1 = fopen(argv[2], "rb");
+	arquivo2 = fopen(argv[3], "wb");
 
 	if(*argv[1] == 'c') {
 		compacta(arquivo1, arquivo2);
