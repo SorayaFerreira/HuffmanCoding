@@ -60,8 +60,8 @@ class Compactador
    FILE * leitor; // ponteiro leitor
    FILE * escritor; // ponteiro que escreverá o arquivo compactado
 
-   uint8_t alfabeto_k; // número de letras no alfabeto
-   int letras_t; // número de letras impressas 
+   uint16_t alfabeto_k; // número de letras no alfabeto
+   uint32_t letras_t; // número de letras impressas 
 
    vector<uint8_t> codigo_Arvore; // vetor que guardará o codigo da arvore em binario
    vector<uint8_t> codigo_No; // vetor que guardara o codigo que o no compactado representa
@@ -137,9 +137,7 @@ int main(int argc, char *argv[]){
     {
         printf("\n -=-=-=-=-=-=-=- nenhuma instrução passada -=-=-=-=-=-=--=\n \n -=-=-=-=-=-=--=-=-=-=- Programa finalizado -=-=-=-=-=-==-=\n");
     }
-
     
-
     fclose(arquivo_lido); //fecha o leitor
     fclose(arquivo_escrito);
 
@@ -354,9 +352,9 @@ void Compactador::distribui_Byte()
 
     this->alfabeto_k = this->indice.size(); // recebe o número de letras do qual o alfabeto é munido, será adicionado ao cabeçalho
 
-    fwrite(&this->alfabeto_k,1,1, this->escritor); //escreve a quantidade K no cabeçalho do arquivo.
+    fwrite(&this->alfabeto_k,2,1, this->escritor); //escreve a quantidade K no cabeçalho do arquivo.
 
-    this->escreve_letras_t();// escreve a quantidade de T letras (bytes) do arquivo
+    fwrite(&this->letras_t,4,1,this->escritor); // escreve a quantidade de T letras (bytes) do arquivo
 
     printf("\n -=-=-=-=-=-=-=- Bytes distribuídos com sucesso -=-=-=-=--=--==-=-\n\n");   
 
@@ -382,45 +380,6 @@ void Compactador::cria_Arvore()
         this->indice.push_back(novo);
 
         sobe(this->indice,this->indice.size() -1);
-    }
-    
-}
-
-
-void Compactador::escreve_letras_t()
-{
-    int quociente = this->letras_t;
-    int resto;
-    int casa = 0;
-
-    bool vetor[32] = {0}; // numero total de letras que o arquivo pode ter (4bytes)
-
-    while (quociente != 0) //transforma o numero inteiro de letras T em um numero binario no vetor
-    {
-        resto = quociente % 2;
-        vetor[31-casa] = resto;
-        quociente = quociente / 2;
-        casa ++;
-    }
-
-    int byte = 0; 
-    int potencia = 8;
-
-    for(int i = 0 ; i < 32 ; i++) // percorre o vetor anterior, dividindo-o em 4, a cada 8 casas percorridas se transforma em byte e é escrito
-    { 
-        potencia --;
-
-        if(vetor[i])
-        {
-            byte += pow(2,potencia);
-        }
-
-        if(potencia == 0)
-        {
-            fwrite(&byte,1,1,this->escritor);
-            potencia = 8;
-        }
-
     }
     
 }
