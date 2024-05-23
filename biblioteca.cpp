@@ -13,8 +13,8 @@ No * No::getFilho_direito() {return this->dir;}
 void No::setFilho_direito(No * &filho, No * &novo_pai) {this->dir = filho; dir->pai = novo_pai;}
 
 // Métodos para obter e definir o valor compactado
-uint8_t No::getCompacto() {return this->compacto;}
-void No::setCompacto(uint8_t bin) {this->compacto = bin;}
+uint8_t No::getCompacto() {return this->codigo;}
+void No::setCompacto(uint8_t bin) {this->codigo = bin;}
 
 // Método para verificar se é folha
 bool No::getFolha() {return this->folha;}

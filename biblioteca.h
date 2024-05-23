@@ -15,12 +15,12 @@ class No {
     No * esq; // - filho esquerdo
     No * dir; // - filho direito
     No * pai; // pai do no 
-    uint8_t compacto; // - o código gerado para ser o byte no arquivo compactado
+    uint8_t codigo; // - o código gerado para ser o byte no arquivo compactado
     bool folha; // - indicador se o nó é galho da arvore ou uma folha
 
     public:
 
-    No() : frequencia(0), esq(nullptr), dir(nullptr), pai(nullptr), compacto(0), folha(false) {}
+    No() : frequencia(0), esq(nullptr), dir(nullptr), pai(nullptr), codigo(0), folha(false) {}
 
     // Métodos para obter e definir a frequência
     int getFrequencia();
