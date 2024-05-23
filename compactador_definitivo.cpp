@@ -109,25 +109,39 @@ void retira_Minimo(vector<No*> &vetor);
 
 // CODIGO MAIN
 
-int main(){
+int main(int argc, char *argv[]){
 
-    FILE * arquivo_original = fopen("original.txt", "rb"); //ponteiro de arquivo apontando para arquivo desejado
-    FILE * arquivo_compactado = fopen("compactado.clink", "wb");
+    FILE * arquivo_lido = fopen(argv[2], "rb"); //ponteiro de arquivo apontando para arquivo desejado
+    FILE * arquivo_escrito = fopen(argv[3], "wb");
 
+    char modo = argv[1][0];
 
     printf("Leitor inicializado\n");
 
-    if (!arquivo_original) { // verifica se o arquivo foi aberto corretamente, caso contrário, imprime a mensagem de erro.
+    if (!arquivo_lido) { // verifica se o arquivo foi aberto corretamente, caso contrário, imprime a mensagem de erro.
         fprintf(stderr, "Erro ao abrir o arquivo.\n"); 
         return 1;
     }
 
     printf("leitor sem erros\n");
 
-    Compactador clinkCompacta(arquivo_original, arquivo_compactado);
+    if(modo == 'c')
+    {
+        Compactador clinkCompacta(arquivo_lido, arquivo_escrito);  
+    }
+    else if (modo == 'd')
+    {
+        // Descompactador sorayaDescompacta(arquivo_lido, arquivo_escrito);
+    }
+    else
+    {
+        printf("\n -=-=-=-=-=-=-=- nenhuma instrução passada -=-=-=-=-=-=--=\n \n -=-=-=-=-=-=--=-=-=-=- Programa finalizado -=-=-=-=-=-==-=\n");
+    }
 
-    fclose(arquivo_original); //fecha o leitor
-    fclose(arquivo_compactado);
+    
+
+    fclose(arquivo_lido); //fecha o leitor
+    fclose(arquivo_escrito);
 
     return 0;
 }
@@ -220,6 +234,7 @@ void Compactador::escreve_Arquivo_Compactado()
        this->escreve_Vector(this->vetor_frequencia[byte]->getCodigo()); 
     }
 
+    this->descarrega(); // ultima escrita no arquivo, caso ainda haja algum bit remanescente no buffer
 }
 
 void Compactador::escreve_Vector(vector<uint8_t> vector)
