@@ -292,7 +292,7 @@ void Descompactador::Cria_Arvore()
     {
         this->indice[0]->setCodigo(this->codigo_No); // em ordem que foi criado, os Nós folhas receberam seus códigos
 
-        //raiz = this->indice[0]; precisa de um novo lugar para armazenar os nós folhas
+        //raiz = this->indice[0]; -======-=-==-=-=-==- precisa de um novo lugar para armazenar os nós folhas-=-=-=-=-=--= ATENÇÃO
 
         this->indice.erase(this->indice.begin()); // tira o ponteiro do primeiro elemento do indice
 
