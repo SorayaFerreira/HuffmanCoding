@@ -8,6 +8,7 @@ using namespace std;
 // CABEÇALHO
 
 class Compactador;
+class Descompactador;
 
 class No {
     private:
@@ -87,6 +88,35 @@ class Compactador
    void descarrega(); // escreve os elementos do buffer no arquivo compactado
    void escreve_Vector(vector<uint8_t> vector); // escreve os elementos do vecto no buffer
    void escreve_Arquivo_Compactado(); // escreve o codigo da arvore e em seguida as letras codificadas no arquivo compactado
+};
+
+class Descompactador
+{
+    private:
+    vector<No*> vetor_frequencia;
+    vector<No*> indice;
+
+    FILE * leitor;
+    FILE * escritor;
+
+    uint16_t alfabeto_k;
+    uint32_t letras_t;
+
+    vector<uint8_t> codigo_Arvore;
+    vector<uint8_t> codigo_No;
+
+    uint8_t buffer[8];
+    uint8_t buffer_elementos;
+
+    public:
+    Descompactador(FILE * leitor, FILE * escritor);
+    ~Descompactador();
+
+    void Obtem_Cabecalho();
+    void Obtem_Letras();
+    void Obtem_Codigo_Arvore();
+    uint8_t Obtem_Bit();
+    void Cria_Arvore();
 };
 
 int pai_Heap(int i);
@@ -247,6 +277,117 @@ No::~No()
     this->dir = nullptr;
 }
 
+// metodos da classe descompactador
+
+void Descompactador::Cria_Arvore()
+{   
+
+    if(this->codigo_Arvore.size()<1){return;} // se não houver codigo de arvore, para a funcao
+
+    if(this->codigo_Arvore[0] == 0) // verifica se o Nó será galho ou folha
+    {
+        this->codigo_Arvore.erase(this->codigo_Arvore.begin()); // apaga o primeiro elemento codigo arvore
+    }
+    else
+    {
+        this->indice[0]->setCodigo(this->codigo_No); // em ordem que foi criado, os Nós folhas receberam seus códigos
+
+        //raiz = this->indice[0]; precisa de um novo lugar para armazenar os nós folhas
+
+        this->indice.erase(this->indice.begin()); // tira o ponteiro do primeiro elemento do indice
+
+        return;
+    }
+    
+    // indo para a esquerda
+    this->codigo_No.push_back(0);
+    this->Cria_Arvore();
+    this->codigo_No.pop_back();
+
+    // indo para a direita
+    this->codigo_No.push_back(1);
+    this->Cria_Arvore();
+    this->codigo_No.pop_back();
+}
+
+uint8_t Descompactador::Obtem_Bit()
+{
+    if(this->buffer_elementos == 0)
+    {
+        uint8_t byte;
+
+        // Leia sobre a função fread
+
+        if(fread(&byte,1,1,this->leitor) == 0){return 2;} // fread faz com que a variavel byte receba o byte do arquivo, o if compara para ver se o arquivo é valido, caso não for valido, retorna 2 (indicando erro na main)
+        
+        for(uint8_t i = 0; i < 8; i++)
+        {
+            this->buffer[(7-i)] = (byte % 2);
+
+            byte = byte / 2;
+        }
+
+        this->buffer_elementos = 8;
+    }
+
+    uint8_t bit = this->buffer[8 - this->buffer_elementos];
+
+    this->buffer_elementos--;
+
+    return bit;
+}
+
+void Descompactador::Obtem_Codigo_Arvore()
+{
+    int contador = 0;
+
+    uint8_t bit;
+
+    while (contador != this->alfabeto_k)
+    {
+        bit = this->Obtem_Bit();
+        this->codigo_Arvore.push_back(bit);
+
+        if(bit == 1)
+        {
+            contador++;
+        }
+
+        if(bit == 2){printf("erro ao capturar bits da arvore"); return;}
+    }
+    
+
+}
+
+void Descompactador::Obtem_Letras()
+{
+    uint8_t byte;
+
+    for(int i = 0; i< this->alfabeto_k; i++)
+    {
+        fread(&byte,1,1,this->leitor);
+
+        No * novo = new No();
+
+        novo->setFolha();
+        novo->setByte_letra(byte);
+
+        this->indice.push_back(novo);
+    }
+}
+
+void Descompactador::Obtem_Cabecalho()
+{
+    fread(&this->alfabeto_k,2,1,this->leitor);
+    fread(&this->letras_t,4,1,this->leitor);
+}
+
+Descompactador::Descompactador(FILE * leitor, FILE * escritor): leitor(leitor), escritor(escritor), vetor_frequencia(256,nullptr), indice(0,nullptr), alfabeto_k(0), letras_t(0), buffer_elementos(0),codigo_Arvore(0,0), codigo_No(0,0)
+{
+    for(uint8_t i = 0; i < 8; i++){this->buffer[i]= 0;} // inicializa o buffer com 0 em seus elementos
+
+}
+
 // metodos da classe Compactador
 
 void Compactador::escreve_Arquivo_Compactado()
@@ -332,7 +473,7 @@ void Compactador::remove_codigo_No()
     this->codigo_No.pop_back();
 }
 
-Compactador::Compactador(FILE * leitor, FILE * escritor): leitor(leitor), escritor(escritor), vetor_frequencia(256,nullptr), alfabeto_k(0), letras_t(0), buffer_elementos(0)
+Compactador::Compactador(FILE * leitor, FILE * escritor): leitor(leitor), escritor(escritor), vetor_frequencia(256,nullptr),indice(0,nullptr), alfabeto_k(0), letras_t(0), buffer_elementos(0), codigo_Arvore(0,0), codigo_No(0,0)
 {
     for(uint8_t i = 0; i < 8; i++){this->buffer[i]= 0;} // inicializa o buffer com 0 em seus elementos
 
