@@ -73,6 +73,7 @@ class Compactador
 
    public:
    Compactador(FILE * leitor, FILE * escritor); // construtor
+   ~Compactador(); // destrutor
    int obtem_Byte(); // obtem byte do arquivo lido
    void distribui_Byte(); // cria os devidos Nos
    void cria_Arvore(); // cria a arvore de huffman
@@ -80,7 +81,6 @@ class Compactador
    void adiciona_codigo_Arvore(uint8_t x); // usado ao percorrer a arvore, para settar os numeros
    void adiciona_codigo_No(uint8_t x); // cria o codigo do No
    void remove_codigo_No(); // remove o ultimo elemento do No ao retornar da recursao
-   void escreve_letras_t(); // escreve a quantidade de letras do arquivo original serão lidas no compactado
    vector<uint8_t> devolve_Codigo_No(); // devolve o vector de codigo do no
    vector<uint8_t> devolve_Codigo_Arvore(); // retorne o vector de codigo da arvore
    void escreve_Byte(uint8_t byte); // escreve byte no arquivo compactado
@@ -130,6 +130,7 @@ int main(int argc, char *argv[]){
     if(modo == 'c')
     {
         Compactador clinkCompacta(arquivo_lido, arquivo_escrito);  
+        // objeto destruido automaticamente ao final do escopo
     }
     else if (modo == 'd')
     {
@@ -340,6 +341,15 @@ Compactador::Compactador(FILE * leitor, FILE * escritor): leitor(leitor), escrit
     this->indice[0]->percorre_Arvore(this->indice[0], *this);
     //imprime_arvore(this->indice[0]);
     this->escreve_Arquivo_Compactado();
+    this->indice[0]->Destroi_arvore(this->indice[0]);
+}
+
+Compactador::~Compactador()
+{
+    for (No* no : vetor_frequencia)
+        {
+            delete no;
+        }
 }
 
 int Compactador::obtem_Byte()
