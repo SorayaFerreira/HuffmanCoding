@@ -22,6 +22,7 @@ class No {
     public:
 
     No() : frequencia(0), esq(nullptr), dir(nullptr), codigo(0), folha(false) {}
+    ~No();
 
     // Métodos para obter e definir a frequência
     int getFrequencia();
@@ -49,6 +50,7 @@ class No {
     void imprime_No(int byte);// imprime o nó (para testes)
 
     void percorre_Arvore(No * raiz, Compactador & compact); //Percorre a arvore a partir do No raiz, estabelecendo seus dados
+    void Destroi_arvore(No * raiz);
 };
 
 class Compactador
@@ -184,6 +186,25 @@ void No::imprime_No(int byte){
     printf("É folha : %s\n", this->folha ? "Sim" : "Nao");
 }
 
+void No::Destroi_arvore(No*raiz)
+{
+    if (raiz->folha)
+    {
+        return;
+    }
+
+    if(raiz->esq != nullptr)
+    {
+        Destroi_arvore(raiz->esq);
+    }
+
+    if (raiz->dir != nullptr)
+    {
+        Destroi_arvore(raiz->dir);
+    }
+    
+    delete raiz;
+}
 
 void No::percorre_Arvore(No * raiz, Compactador & compact)
 {
@@ -217,6 +238,12 @@ void No::percorre_Arvore(No * raiz, Compactador & compact)
   }
   
   return;
+}
+
+No::~No()
+{   
+    this->esq = nullptr;
+    this->dir = nullptr;
 }
 
 // metodos da classe Compactador
