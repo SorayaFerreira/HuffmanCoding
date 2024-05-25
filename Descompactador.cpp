@@ -31,15 +31,16 @@ class Descompactador {
         vector<uint8_t> bitsTree;  // vetor com os bits da árvore, p reconstrução
         vector<Node *> newTree;    // vetor com a árvore reconstruída
         int tamanho;               // número de bits do percurso pré-ordem no cabeçalho
+        Node *noRaiz; //nó raiz da árvore reconstruída
+        
 
-    public:
-        Descompactador(FILE *fileRead, FILE *fileWrite);           // Construtor
-        Node *createTree(int iBitsTree = 0, int iLetter = 0, int tam); // Cria a árvore a partir dos bits do percurso
+    public : Descompactador(FILE *fileRead, FILE *fileWrite); // Construtor
+        Node *createTree(int &iBitsTree, int &iLetter, int tam); // Cria a árvore a partir dos bits do percurso
         void readHeader(FILE *fileRead);                           // lê o cabeçalho e armazena nos atributos privados acima
         void writeDecode(vector<Node *> newTree, FILE *fileWrite); // escreve no arquivo os bytes descompactados
         uint16_t getterK();                                        // para acessar o K
         void manageNewTree(); //para auxiliar a criação da árvore
-        
+        void percursoPreOrdem(Node *no);
 };
 
 /*Nó para reconstrução da árvore de Huffman, sem as frequências*/
@@ -64,6 +65,8 @@ class Node {
 
         Node *getterRight(); // Devolve o filho direito    ;)
         void setterRight(Node *no);
+
+        
 
         // bool leaf() const; // Devolve true se é folha e false caso contrário ;)
 };
@@ -110,15 +113,13 @@ int main(int argc, char *argv[]) {
     if (*argv[1] == 'c') {
         // compactador(arquivo1, arquivo2);
     } else if (*argv[1] == 'd') {
-        // descompactador(arquivo1, arquivo2);
-        //Descompactador decod(arquivo1, arquivo2);
+    
+        Descompactador decod(arquivo1, arquivo2);
         printf("\tO arquivo descompactado foi gerado.\n");
 
-        //decod.readHeader(arquivo1);
-        int c;
-        c = 1;
-        printf("uint8_t: %d\n", c);
-        //decod.manageNewTree();
+        decod.readHeader(arquivo1);
+      
+        decod.manageNewTree();
      }
 
     fclose(arquivo1);
@@ -165,20 +166,46 @@ void Descompactador::readHeader(FILE *fileRead) {
 
 
 void Descompactador::manageNewTree() {
-    Node *noRaiz = createTree(0, 0, this->tamanho);
-    printf("noRaiz: %c\n", noRaiz->getCode());
+    int i = 0, j = 0;
+    Node *noRaiz = createTree(i, j, this->tamanho);
+    printf("noRaiz: %d\n", noRaiz->getCode());
 
+
+    this->percursoPreOrdem(noRaiz);
+
+    for (int i = 0; i < tamanho; ++i) {
+        printf(" %d ", newTree[i]->c);
+    }
 }
 
+void Descompactador::percursoPreOrdem(Node *no)
+{ // no é a raiz da árvore, na 1a chamada
+    if (no)
+    {
+        // visita a raiz
+        printf("No: %d\n", no->c);
+        newTree.push_back(no);
+        // desce para o filho esquerdo, se ele existir
+        percursoPreOrdem(no->l);
+        // desce para o filho direito, se ele existir
+        percursoPreOrdem(no->r);
+    }
+    else
+    {
+        return;
+    }
+}
 
 //A última chamada é a raiz, ela q vc vai usar para decodificar
 //Vai começar com nullptr
-Node *Descompactador::createTree(int iBitsTree, int iLetter, int tam)
+Node *Descompactador::createTree(int &iBitsTree, int &iLetter, int tam)
 {
     /* iBitsTree recebe o índice do vetor de bits do percuro pré-ordem
     usado para reconstrução da árvore;
     iLetter recebe o índice do vetor de letras presentes no arquivo (folhas da tree)*/
 
+    if (iBitsTree >= tam) // Verificação de segurança para evitar out-of-bounds
+        return nullptr;
 
     if (bitsTree[iBitsTree] == 1)
     {
@@ -188,8 +215,10 @@ Node *Descompactador::createTree(int iBitsTree, int iLetter, int tam)
     else
     {
         Node *noh = new Node(0, nullptr, nullptr, false);
-        noh->setterLeft(createTree(++iBitsTree, iLetter, tam));
-        noh->setterRight(createTree(++iBitsTree, iLetter, tam));
+        ++iBitsTree;
+        noh->setterLeft(createTree(iBitsTree, iLetter, tam));
+        noh->setterRight(createTree(iBitsTree, iLetter, tam));
+        return noh;
     }
 }
 
@@ -198,8 +227,6 @@ uint16_t Descompactador::getterK() {
 }
 
 // FUNÇÕES DA CLASSE NODE *************************************************************************************
-
-
 
 //construtor de um node
 Node::Node(uint8_t c, Node *l, Node *r, bool leaf) : c(c), l(l), r(r), leaf(leaf) {}
