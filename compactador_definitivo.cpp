@@ -31,11 +31,11 @@ class No {
 
     // Métodos para obter e definir o filho esquerdo
     No * getFilho_esquerdo();
-    void setFilho_esquerdo(No * &filho);
+    void setFilho_esquerdo(No * filho);
 
     // Métodos para obter e definir o filho direito
     No * getFilho_direito();
-    void setFilho_direito(No * &filho);
+    void setFilho_direito(No * filho);
 
     // Métodos para obter e definir o valor compactado
     vector<uint8_t> getCodigo();
@@ -93,7 +93,6 @@ class Compactador
 class Descompactador
 {
     private:
-    vector<No*> vetor_frequencia;
     vector<No*> indice;
 
     FILE * leitor;
@@ -103,20 +102,21 @@ class Descompactador
     uint32_t letras_t;
 
     vector<uint8_t> codigo_Arvore;
-    vector<uint8_t> codigo_No;
 
     uint8_t buffer[8];
     uint8_t buffer_elementos;
 
     public:
     Descompactador(FILE * leitor, FILE * escritor);
-    ~Descompactador();
+    //~Descompactador();
 
     void Obtem_Cabecalho();
     void Obtem_Letras();
     void Obtem_Codigo_Arvore();
     uint8_t Obtem_Bit();
-    void Cria_Arvore();
+    No * Cria_Arvore();
+    void Descompacta_bits();
+    void Percorre_Arvore(No * raiz);
 };
 
 int pai_Heap(int i);
@@ -159,12 +159,12 @@ int main(int argc, char *argv[]){
 
     if(modo == 'c')
     {
-        Compactador clinkCompacta(arquivo_lido, arquivo_escrito);  
+        Compactador compacta(arquivo_lido, arquivo_escrito);  
         // objeto destruido automaticamente ao final do escopo
     }
     else if (modo == 'd')
     {
-        // Descompactador sorayaDescompacta(arquivo_lido, arquivo_escrito);
+         Descompactador descompacta(arquivo_lido, arquivo_escrito);
     }
     else
     {
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]){
     }
     
     fclose(arquivo_lido); //fecha o leitor
-    fclose(arquivo_escrito);
+    fclose(arquivo_escrito);// fecha o escritor
 
     return 0;
 }
@@ -197,11 +197,11 @@ void No::setFrequencia(int freq) {this->frequencia += freq;}
 
 // Métodos para obter e definir o filho esquerdo
 No * No::getFilho_esquerdo() {return this->esq;}
-void No::setFilho_esquerdo(No * &filho) { this->esq = filho;}
+void No::setFilho_esquerdo(No * filho) { this->esq = filho;}
 
 // Métodos para obter e definir o filho direito
 No * No::getFilho_direito() {return this->dir;}
-void No::setFilho_direito(No * &filho) {this->dir = filho;}
+void No::setFilho_direito(No * filho) {this->dir = filho;}
 
 // Métodos para obter e definir o valor compactado
 vector<uint8_t> No::getCodigo() {return this->codigo;}
@@ -279,35 +279,85 @@ No::~No()
 
 // metodos da classe descompactador
 
-void Descompactador::Cria_Arvore()
+void Descompactador::Descompacta_bits()
+{
+    No * raiz = this->Cria_Arvore();
+
+    for(uint32_t i = 0; i < this->letras_t; i++)
+    {
+        this->Percorre_Arvore(raiz);
+    }
+
+    printf("\n Arquivo descompactado com sucesso\n");
+
+    return;
+}
+
+void Descompactador::Percorre_Arvore(No * raiz)
+{   
+    if(raiz->getFolha())
+    {   
+        uint8_t byte = raiz->getByte_letra();
+        fwrite(&byte,1,1,this->escritor);
+        return;
+    }
+    else
+    {
+        uint8_t bit = this->Obtem_Bit();
+
+        if(bit == 2){printf("\nacabaram os bits durante a leitura do byte codificado\n"); return;}
+
+        if (bit == 0)
+        {
+            this->Percorre_Arvore(raiz->getFilho_esquerdo());
+        }
+        else if (bit == 1)
+        {
+            this->Percorre_Arvore(raiz->getFilho_direito());
+        }
+        else{printf("\n encontrado outro valor de bit \n");}
+        
+        return;
+    }    
+}
+
+No * Descompactador::Cria_Arvore()
 {   
 
-    if(this->codigo_Arvore.size()<1){return;} // se não houver codigo de arvore, para a funcao
+    if(this->codigo_Arvore.size()<1){return nullptr;} // se não houver codigo de arvore, para a funcao
+
+    No * novo;
 
     if(this->codigo_Arvore[0] == 0) // verifica se o Nó será galho ou folha
     {
+        novo = new No;
+
         this->codigo_Arvore.erase(this->codigo_Arvore.begin()); // apaga o primeiro elemento codigo arvore
     }
     else
     {
-        this->indice[0]->setCodigo(this->codigo_No); // em ordem que foi criado, os Nós folhas receberam seus códigos
-
-        //raiz = this->indice[0]; -======-=-==-=-=-==- precisa de um novo lugar para armazenar os nós folhas-=-=-=-=-=--= ATENÇÃO
+        novo = this->indice[0]; 
 
         this->indice.erase(this->indice.begin()); // tira o ponteiro do primeiro elemento do indice
+        this->codigo_Arvore.erase(this->codigo_Arvore.begin()); // apaga o primeiro elemento codigo arvore
 
-        return;
+        return novo;
     }
     
     // indo para a esquerda
-    this->codigo_No.push_back(0);
-    this->Cria_Arvore();
-    this->codigo_No.pop_back();
-
+    
+    if(novo->getFilho_esquerdo() == nullptr)
+    {
+        novo->setFilho_esquerdo(this->Cria_Arvore());
+    }
+    
     // indo para a direita
-    this->codigo_No.push_back(1);
-    this->Cria_Arvore();
-    this->codigo_No.pop_back();
+    if(novo->getFilho_direito() == nullptr)
+    {
+        novo->setFilho_direito(this->Cria_Arvore());
+    }
+    
+    return novo;
 }
 
 uint8_t Descompactador::Obtem_Bit()
@@ -339,14 +389,18 @@ uint8_t Descompactador::Obtem_Bit()
 
 void Descompactador::Obtem_Codigo_Arvore()
 {
-    int contador = 0;
+    uint16_t contador = 0;
 
     uint8_t bit;
 
-    while (contador != this->alfabeto_k)
+    if(this->codigo_Arvore.empty()){printf("\n\n O Código arvore está vazio antes de obter os códgios da arvore \n");}
+
+    while (contador < this->alfabeto_k)
     {
         bit = this->Obtem_Bit();
         this->codigo_Arvore.push_back(bit);
+
+        //printf("\nObteve o bit : %d e adicionou ao final da arvore\n", &bit);
 
         if(bit == 1)
         {
@@ -356,14 +410,13 @@ void Descompactador::Obtem_Codigo_Arvore()
         if(bit == 2){printf("erro ao capturar bits da arvore"); return;}
     }
     
-
 }
 
 void Descompactador::Obtem_Letras()
 {
     uint8_t byte;
 
-    for(int i = 0; i< this->alfabeto_k; i++)
+    for(uint16_t i = 0; i < this->alfabeto_k; i++)
     {
         fread(&byte,1,1,this->leitor);
 
@@ -372,6 +425,8 @@ void Descompactador::Obtem_Letras()
         novo->setFolha();
         novo->setByte_letra(byte);
 
+        //printf("\n\n Novo nó folha criado, recebendo o byte : %d\n", &byte);
+
         this->indice.push_back(novo);
     }
 }
@@ -379,13 +434,21 @@ void Descompactador::Obtem_Letras()
 void Descompactador::Obtem_Cabecalho()
 {
     fread(&this->alfabeto_k,2,1,this->leitor);
+
+    //printf("\n Alfabeto K de %d letras obtido \n", &this->alfabeto_k);
+
     fread(&this->letras_t,4,1,this->leitor);
+
+    //printf("\n Quantidade de T letras %d Obtido\n", &this->letras_t);
 }
 
-Descompactador::Descompactador(FILE * leitor, FILE * escritor): leitor(leitor), escritor(escritor), vetor_frequencia(256,nullptr), indice(0,nullptr), alfabeto_k(0), letras_t(0), buffer_elementos(0),codigo_Arvore(0,0), codigo_No(0,0)
+Descompactador::Descompactador(FILE * leitor, FILE * escritor): leitor(leitor), escritor(escritor), alfabeto_k(0), letras_t(0), buffer_elementos(0)
 {
     for(uint8_t i = 0; i < 8; i++){this->buffer[i]= 0;} // inicializa o buffer com 0 em seus elementos
-
+    this->Obtem_Cabecalho();
+    this->Obtem_Letras();
+    this->Obtem_Codigo_Arvore();
+    this->Descompacta_bits();
 }
 
 // metodos da classe Compactador
@@ -483,6 +546,7 @@ Compactador::Compactador(FILE * leitor, FILE * escritor): leitor(leitor), escrit
     //imprime_arvore(this->indice[0]);
     this->escreve_Arquivo_Compactado();
     this->indice[0]->Destroi_arvore(this->indice[0]);
+    printf("\n Arquivo Compactado com sucesso\n");
 }
 
 Compactador::~Compactador()
