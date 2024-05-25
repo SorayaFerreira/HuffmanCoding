@@ -29,13 +29,15 @@ class Descompactador {
                                     //aparecem no arquivo (ordem do percurso)
         vector<uint8_t> bitsTree; // vetor com os bits da árvore, p reconstrução
         vector<Node *> newTree;
+        int tamanho; //número de bits do percurso pré-ordem no cabeçalho
 
     public:
         Descompactador(FILE *fileRead, FILE *fileWrite);
         void readHeader(FILE *fileRead);
-        void createTree(int iBitsTree = 0, int iLetter = 0);
+        void createTree(int iBitsTree = 0, int iLetter = 0, Node *no = nullptr);
         void writeDecode(vector<Node *> newTree, FILE *fileWrite);
         uint16_t getterK();
+
 };
 
 /*Nó para reconstrução da árvore de Huffman, sem as frequências*/
@@ -47,7 +49,7 @@ private:
 
 public:
   Node(uint8_t c, Node *l = nullptr, Node *r = nullptr); // Construtor folhas
-  Node(Node *l = nullptr, Node *r = nullptr); // construtor nós internos
+  //Node(Node *l = nullptr, Node *r = nullptr); // construtor nós internos
   
   uint8_t getCode(); // Devolve o código do caractere ;)
   void setCode(uint8_t cod); //atribui um código ao nó
@@ -105,6 +107,9 @@ int main(int argc, char *argv[]) {
         printf("\tO arquivo descompactado foi gerado.\n");
 
         decod.readHeader(arquivo1);
+        //decod.createTree();
+
+ 
     }
 
     fclose(arquivo1);
@@ -144,14 +149,30 @@ void Descompactador::readHeader(FILE *fileRead) {
         if(bit)
             ++umLidos;
     }
+    this->tamanho = bitsTree.size();
 }
 
-void Descompactador::createTree(int iBitsTree, int iLetter) {
+void Descompactador::createTree(int iBitsTree, int iLetter, Node *no)
+{
 
+    if(iBitsTree == (this->tamanho -1)) {
+        return;
+    }
 
+    if(!no) {
+        newTree[iBitsTree] = new Node(NULL, nullptr, nullptr);
+    }
     
-}
+    //printf(" %c", newTree[iBitsTree]->getCode());
 
+    if(bitsTree[iBitsTree] == 1) {
+        no->setCode(caracters[iLetter++]);
+
+    } else if(bitsTree[iBitsTree] == 0) {
+        createTree(++iBitsTree, iLetter, no->getterLeft());
+        createTree(++iBitsTree, iLetter, no->getterRight());
+    }
+}
 
 uint16_t Descompactador::getterK() {
     return this->K;
@@ -160,7 +181,7 @@ uint16_t Descompactador::getterK() {
 // FUNÇÕES DA CLASSE NODE
 //construtor de um node
 Node::Node(uint8_t c, Node *l, Node *r) : c(c), l(l), r(r) {}
-Node::Node(Node *l, Node *r) : l(l), r(r) {}
+//Node::Node(Node *l, Node *r) : l(l), r(r) {}
 
 //retorna ptr do filho direito
 Node *Node::getterRight() {
