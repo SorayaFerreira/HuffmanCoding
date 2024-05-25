@@ -52,6 +52,7 @@ class No {
 
     void percorre_Arvore(No * raiz, Compactador & compact); //Percorre a arvore a partir do No raiz, estabelecendo seus dados
     void Destroi_arvore(No * raiz);
+    void Destroi_Arvore_Raiz(No * raiz);
 };
 
 class Compactador
@@ -108,6 +109,7 @@ class Descompactador
 
     public:
     Descompactador(FILE * leitor, FILE * escritor);
+    ~Descompactador();
     //~Descompactador();
 
     void Obtem_Cabecalho();
@@ -164,7 +166,8 @@ int main(int argc, char *argv[]){
     }
     else if (modo == 'd')
     {
-         Descompactador descompacta(arquivo_lido, arquivo_escrito);
+        Descompactador descompacta(arquivo_lido, arquivo_escrito);
+        // objeto destruido automaticamente ao final do escopo
     }
     else
     {
@@ -215,6 +218,21 @@ void No::imprime_No(int byte){
     printf("Byte: %d\n", byte);
     printf("Frequencia: %d\n", this->frequencia);
     printf("É folha : %s\n", this->folha ? "Sim" : "Nao");
+}
+
+void No::Destroi_Arvore_Raiz(No*raiz)
+{
+    if(raiz->esq != nullptr)
+    {
+        Destroi_arvore(raiz->esq);
+    }
+
+    if (raiz->dir != nullptr)
+    {
+        Destroi_arvore(raiz->dir);
+    }
+    
+    delete raiz;
 }
 
 void No::Destroi_arvore(No*raiz)
@@ -279,6 +297,26 @@ No::~No()
 
 // metodos da classe descompactador
 
+Descompactador::~Descompactador()
+{
+     if (leitor) {
+            fclose(leitor);
+            leitor = nullptr;
+        }
+        if (escritor) {
+            fclose(escritor);
+            escritor = nullptr;
+        }
+
+        // Deletar todos os ponteiros no vetor 'indice'
+        for (No* no : indice) {
+            delete no;
+        }
+
+        // Limpar o vetor 'indice' para evitar ponteiros pendentes
+        indice.clear();
+}
+
 void Descompactador::Descompacta_bits()
 {
     No * raiz = this->Cria_Arvore();
@@ -289,6 +327,8 @@ void Descompactador::Descompacta_bits()
     }
 
     printf("\n Arquivo descompactado com sucesso\n");
+
+    raiz->Destroi_Arvore_Raiz(raiz);
 
     return;
 }
@@ -552,9 +592,18 @@ Compactador::Compactador(FILE * leitor, FILE * escritor): leitor(leitor), escrit
 Compactador::~Compactador()
 {
     for (No* no : vetor_frequencia)
-        {
-            delete no;
-        }
+    {
+        delete no;
+    }
+
+     // Deletar todos os ponteiros no vetor 'indice'
+    for (No* no : indice) 
+    {
+        delete no;
+    }
+
+    // Limpar o vetor 'indice' para evitar ponteiros pendentes
+    indice.clear();
 }
 
 int Compactador::obtem_Byte()
