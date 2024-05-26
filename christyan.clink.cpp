@@ -1,3 +1,17 @@
+/********************************************
+ * 
+ * Nome Aluno (1) : Christyan Clink Rohten Dias
+ * RGA : 2022 1905 0057
+ * 
+ * Nome Aluno (2): Soraya Dias Ferreira
+ * RGA : 2023 1906 0410
+ * 
+ * Trabalho de Estrutura de Dados / UFMS 2024
+ * 
+ * Professor: Diego Padilha Rubert
+ *
+*/
+
 #include <cstdint>
 #include <cstdio>
 #include <vector>
@@ -96,31 +110,30 @@ class Compactador
 class Descompactador
 {
     private:
-    vector<No*> indice;
+    vector<No*> indice; //vetor onde será armazanado os bytes das folhas em ordem para a arvore
 
-    FILE * leitor;
-    FILE * escritor;
+    FILE * leitor; // ponteiro para o leitor de arquivo
+    FILE * escritor; // ponteiro para o escritor de arquivo
 
-    uint16_t alfabeto_k;
-    uint32_t letras_t;
+    uint16_t alfabeto_k; // variavel que armazena a quantidade de K letras do alfabeto
+    uint32_t letras_t; // variavel que armazena quantas letras (bytes) estão codificadas no arquivo
 
-    vector<uint8_t> codigo_Arvore;
+    vector<uint8_t> codigo_Arvore; // vetor que guarda o codigo para montar a arvore
 
-    uint8_t buffer[8];
-    uint8_t buffer_elementos;
+    uint8_t buffer[8]; // vetor que guarda os bits do buffer
+    uint8_t buffer_elementos; // variavel que guarda a quantidade de bits no buffer
 
     public:
-    Descompactador(FILE * leitor, FILE * escritor);
-    ~Descompactador();
-    //~Descompactador();
+    Descompactador(FILE * leitor, FILE * escritor); // construtor
+    ~Descompactador(); // destrutor
 
-    void Obtem_Cabecalho();
-    void Obtem_Letras();
-    void Obtem_Codigo_Arvore();
-    uint8_t Obtem_Bit();
-    No * Cria_Arvore();
-    void Descompacta_bits();
-    void Percorre_Arvore(No * raiz);
+    void Obtem_Cabecalho(); // metodo que obtem K e T do arquivo
+    void Obtem_Letras(); // metodo que obtem os K bytes do arquivo e guarda no indice
+    void Obtem_Codigo_Arvore(); // metodo que obtem o codigo arvore bit a bit
+    uint8_t Obtem_Bit(); // metodo que retira 1 bit do buffer 
+    No * Cria_Arvore(); // metodo recursivo que retorna um ponteiro No que é raiz da arvore criada recursivamente 
+    void Descompacta_bits(); // obtem bit a bit os bytes codificados do arquivo
+    void Percorre_Arvore(No * raiz); // percorre a raiz com os bits lidos do arquivo até achar a letra byte correspondente 
 };
 
 int pai_Heap(int i);
@@ -135,7 +148,7 @@ void imprime_arvore(No * raiz);
 
 void desce(vector<No*>& vetor, int pai, int tamanho);
 
-void imprime_heap(vector<No * > &vetor);
+//void imprime_heap(vector<No * > &vetor);
 
 void min_heap(vector<No*> & vetor);
 
@@ -216,13 +229,14 @@ void No::setCodigo(vector<uint8_t> &bin) {this->codigo = bin;}
 bool No::getFolha() {return this->folha;}
 void No::setFolha() {this->folha = true;}
 
-void No::imprime_No(int byte){
+// metodo para imprimir o no, usado para testar a execução
+void No::imprime_No(int byte){ 
     printf("Byte: %d\n", byte);
     printf("Frequencia: %d\n", this->frequencia);
     printf("É folha : %s\n", this->folha ? "Sim" : "Nao");
 }
 
-void No::Destroi_Arvore_Raiz(No*raiz)
+void No::Destroi_Arvore_Raiz(No*raiz) // percorre a arvore destruindo os Nos a partir das folhas
 {
     if(raiz->esq != nullptr)
     {
@@ -237,7 +251,7 @@ void No::Destroi_Arvore_Raiz(No*raiz)
     delete raiz;
 }
 
-void No::Destroi_arvore(No*raiz)
+void No::Destroi_arvore(No*raiz) // Destroi a arvore sem destruir as folhas
 {
     if (raiz->folha)
     {
@@ -257,7 +271,7 @@ void No::Destroi_arvore(No*raiz)
     delete raiz;
 }
 
-void No::percorre_Arvore(No * raiz, Compactador & compact)
+void No::percorre_Arvore(No * raiz, Compactador & compact) // percorre a arvore, atribuindo os codigos de bytas as folhas e montando o codigo da arvore(pre-ordemm)
 {
   if(raiz->folha)
   {
@@ -291,7 +305,7 @@ void No::percorre_Arvore(No * raiz, Compactador & compact)
   return;
 }
 
-No::~No()
+No::~No() // destrutor do no
 {   
     this->esq = nullptr;
     this->dir = nullptr;
@@ -299,7 +313,7 @@ No::~No()
 
 // metodos da classe descompactador
 
-Descompactador::~Descompactador()
+Descompactador::~Descompactador() // destrutor
 {
     for (unsigned int i = 0; i < indice.size(); i++)
     {
@@ -312,23 +326,23 @@ Descompactador::~Descompactador()
     indice.clear();
 }
 
-void Descompactador::Descompacta_bits()
+void Descompactador::Descompacta_bits() // monta a arvore a partir da raiz, percorre atrivuindo os codigos de bits e escrevendo o arquivo descompactado
 {
-    No * raiz = this->Cria_Arvore();
+    No * raiz = this->Cria_Arvore(); // monta a arvore
 
-    for(uint32_t i = 0; i < this->letras_t; i++)
+    for(uint32_t i = 0; i < this->letras_t; i++) // T vezes executa a função que obtem bit e percorre a arvore e escreve os codigos decodificados
     {
         this->Percorre_Arvore(raiz);
     }
 
     printf("\n Arquivo descompactado com sucesso\n");
 
-    raiz->Destroi_Arvore_Raiz(raiz);
+    raiz->Destroi_Arvore_Raiz(raiz); // destroi a arvore montada a partir da raiz
 
     return;
 }
 
-void Descompactador::Percorre_Arvore(No * raiz)
+void Descompactador::Percorre_Arvore(No * raiz) // percorre a arvore obtendo os bits do arquivo, escrevendo os bytes da folha
 {   
     if(raiz->getFolha())
     {   
@@ -422,7 +436,7 @@ uint8_t Descompactador::Obtem_Bit()
     return bit;
 }
 
-void Descompactador::Obtem_Codigo_Arvore()
+void Descompactador::Obtem_Codigo_Arvore() // obtem o codigo da arvore codificado
 {
     uint16_t contador = 0;
 
@@ -447,7 +461,7 @@ void Descompactador::Obtem_Codigo_Arvore()
     
 }
 
-void Descompactador::Obtem_Letras()
+void Descompactador::Obtem_Letras() // guarda as letras em ordem para as folhas da arvore
 {
     uint8_t byte;
 
