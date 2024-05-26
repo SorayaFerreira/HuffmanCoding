@@ -301,22 +301,15 @@ No::~No()
 
 Descompactador::~Descompactador()
 {
-     if (leitor) {
-            fclose(leitor);
-            leitor = nullptr;
+    for (unsigned int i = 0; i < indice.size(); i++)
+    {
+        if(indice[i] != nullptr)
+        {
+            delete indice[i];
         }
-        if (escritor) {
-            fclose(escritor);
-            escritor = nullptr;
-        }
+    }
 
-        // Deletar todos os ponteiros no vetor 'indice'
-        for (No* no : indice) {
-            delete no;
-        }
-
-        // Limpar o vetor 'indice' para evitar ponteiros pendentes
-        indice.clear();
+    indice.clear();
 }
 
 void Descompactador::Descompacta_bits()
