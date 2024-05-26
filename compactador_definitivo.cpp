@@ -58,20 +58,22 @@ class No {
 class Compactador
 {
    private:
-   vector<No*> vetor_frequencia;//{256, nullptr}; // vetor de ponteiros para No (objetos)
-   vector<No*> indice; // vetor de indice, receberá os nós ultilizados na compactacao do arquivo
 
    FILE * leitor; // ponteiro leitor
    FILE * escritor; // ponteiro que escreverá o arquivo compactado
+
+   vector<No*> vetor_frequencia;//{256, nullptr}; // vetor de ponteiros para No (objetos)
+   vector<No*> indice; // vetor de indice, receberá os nós ultilizados na compactacao do arquivo
 
    uint16_t alfabeto_k; // número de letras no alfabeto
    uint32_t letras_t; // número de letras impressas 
 
    vector<uint8_t> codigo_Arvore; // vetor que guardará o codigo da arvore em binario
    vector<uint8_t> codigo_No; // vetor que guardara o codigo que o no compactado representa
-
-   uint8_t buffer[8]; // vetor de buffer para auxiliar na escrita do arquivo compactado
+   
    uint8_t buffer_elementos; // quantidade de elementos inseridos no buffer
+   uint8_t buffer[8]; // vetor de buffer para auxiliar na escrita do arquivo compactado
+  
 
    public:
    Compactador(FILE * leitor, FILE * escritor); // construtor
@@ -576,7 +578,7 @@ void Compactador::remove_codigo_No()
     this->codigo_No.pop_back();
 }
 
-Compactador::Compactador(FILE * leitor, FILE * escritor): leitor(leitor), escritor(escritor), vetor_frequencia(256,nullptr),indice(0,nullptr), alfabeto_k(0), letras_t(0), buffer_elementos(0), codigo_Arvore(0,0), codigo_No(0,0)
+Compactador::Compactador(FILE * leitor, FILE * escritor): leitor(leitor), escritor(escritor), vetor_frequencia(256,nullptr),indice(0,nullptr), alfabeto_k(0), letras_t(0), codigo_Arvore(0,0), codigo_No(0,0), buffer_elementos(0)
 {
     for(uint8_t i = 0; i < 8; i++){this->buffer[i]= 0;} // inicializa o buffer com 0 em seus elementos
 
@@ -591,15 +593,17 @@ Compactador::Compactador(FILE * leitor, FILE * escritor): leitor(leitor), escrit
 
 Compactador::~Compactador()
 {
-    for (No* no : vetor_frequencia)
+    for (unsigned int i = 0; i < 256; i++)
     {
-        delete no;
+        if(vetor_frequencia[i] != nullptr){delete vetor_frequencia[i];}
     }
 
+    vetor_frequencia.clear();
+
      // Deletar todos os ponteiros no vetor 'indice'
-    for (No* no : indice) 
+    for (unsigned int i = 0; i < indice.size(); i++) 
     {
-        delete no;
+        if(indice[i] != nullptr){delete indice[i];}
     }
 
     // Limpar o vetor 'indice' para evitar ponteiros pendentes
@@ -768,10 +772,10 @@ void retira_Minimo(vector<No*> &vetor)
     }
 }
 
-void imprime_heap(vector<No * > &vetor)
+/*void imprime_heap(vector<No * > &vetor)
 {
-    for(int i = 0; i < vetor.size(); i++)
+    for(uint8_t i = 0; i < vetor.size(); i++)
     {
         printf("\nposicao: %d \nfrequencia: %d",i, vetor[i]->getFrequencia());
     }
-}
+}*/
