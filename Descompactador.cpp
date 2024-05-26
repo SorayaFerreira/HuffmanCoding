@@ -16,7 +16,7 @@ Cabeçalho:
     > Sequência de bits do arquivo compactado.
 
 */
-
+class Bits;
 class Node;
 
 class Descompactador {
@@ -32,12 +32,12 @@ class Descompactador {
         vector<Node *> newTree;    // vetor com a árvore reconstruída
         int tamanho;               // número de bits do percurso pré-ordem no cabeçalho
         Node *noRaiz; //nó raiz da árvore reconstruída
-        
+        Bits *lerBits;
 
     public : Descompactador(FILE *fileRead, FILE *fileWrite); // Construtor
         Node *createTree(int &iBitsTree, int &iLetter, int tam); // Cria a árvore a partir dos bits do percurso
-        void readHeader(FILE *fileRead);                           // lê o cabeçalho e armazena nos atributos privados acima
-        void writeDecode(vector<Node *> newTree, FILE *fileWrite); // escreve no arquivo os bytes descompactados
+        void readHeader(FILE *fileRead, Bits *lerBits);                           // lê o cabeçalho e armazena nos atributos privados acima
+        void writeDecode(Node *noh, Bits *obj);         // escreve no arquivo os bytes descompactados
         uint16_t getterK();                                        // para acessar o K
         void manageNewTree(); //para auxiliar a criação da árvore
         void percursoPreOrdem(Node *no);
@@ -115,11 +115,7 @@ int main(int argc, char *argv[]) {
     } else if (*argv[1] == 'd') {
     
         Descompactador decod(arquivo1, arquivo2);
-        printf("\tO arquivo descompactado foi gerado.\n");
-
-        decod.readHeader(arquivo1);
-      
-        decod.manageNewTree();
+        printf("\n\tO arquivo descompactado foi gerado.\n");
      }
 
     fclose(arquivo1);
@@ -129,10 +125,20 @@ int main(int argc, char *argv[]) {
 
 // FUNÇÕES DA CLASSE DESCOMPACTADOR****************************************************************************************
 
-Descompactador::Descompactador(FILE *fR, FILE *fW) : fileRead(fR), fileWrite(fW){};
+Descompactador::Descompactador(FILE *fR, FILE *fW) : fileRead(fR), fileWrite(fW){
+    lerBits = new Bits(fileRead);// objeto para ler a sequência de bits
+    // para reconstrução da árvore e armazenar no vetor bitsTree.
 
+    this->readHeader(fR, lerBits);
+    this->manageNewTree();
+    uint8_t bitFromFile;
+    this->writeDecode(this->noRaiz, this->lerBits);
+
+};
+
+void Descompactador::readHeader(FILE *fileRead, Bits *lerBits) {
 //Lê o arquivo e inicializa os atributos para usar em outras funções.
-void Descompactador::readHeader(FILE *fileRead) {
+
     fread(&(this->K), sizeof(uint16_t), 1, fileRead);
     printf("\tK: %d\n", this->K); //para teste
     
@@ -148,12 +154,13 @@ void Descompactador::readHeader(FILE *fileRead) {
     }
 
     int umLidos = 0; //número de 1s que já foram lidos
-    Bits lerBits(fileRead); //objeto para ler a sequência de bits 
-    //para reconstrução da árvore e armazenar no vetor bitsTree.
+
     
-    printf("\n\t");
-    for (int j = 0; umLidos < this->K; j++) {
-        uint8_t bit = lerBits.obtem_bit();
+    printf("\n");
+    uint8_t bit;
+    for (int j = 0; umLidos < this->K; j++)
+    {
+        bit = lerBits->obtem_bit();
         bitsTree.push_back(bit);
         printf(" %d", bitsTree[j]);
 
@@ -166,24 +173,30 @@ void Descompactador::readHeader(FILE *fileRead) {
 
 
 void Descompactador::manageNewTree() {
+/*Auxilia a criação da nova árvore de Huffman, chamando 
+a função createTree com seus devidos parâmetros e armazenando
+os ponteiros da árvore no vetor newTree.*/
+
     int i = 0, j = 0;
-    Node *noRaiz = createTree(i, j, this->tamanho);
-    printf("noRaiz: %d\n", noRaiz->getCode());
+    this->noRaiz = createTree(i, j, this->tamanho);
+    printf("\tnoRaiz: %d\n", noRaiz->getCode());
 
-
-    this->percursoPreOrdem(noRaiz);
+    Node *aux = noRaiz;
+    this->percursoPreOrdem(aux);
 
     for (int i = 0; i < tamanho; ++i) {
         printf(" %d ", newTree[i]->c);
     }
+    printf("\n");
 }
 
 void Descompactador::percursoPreOrdem(Node *no)
-{ // no é a raiz da árvore, na 1a chamada
+{ // Armazena os ponteiros da nova árvore no vetor newTree
+// na sequência de pré-ordem.
     if (no)
     {
         // visita a raiz
-        printf("No: %d\n", no->c);
+        printf("\tNo: %c\n", no->c);
         newTree.push_back(no);
         // desce para o filho esquerdo, se ele existir
         percursoPreOrdem(no->l);
@@ -196,29 +209,60 @@ void Descompactador::percursoPreOrdem(Node *no)
     }
 }
 
-//A última chamada é a raiz, ela q vc vai usar para decodificar
-//Vai começar com nullptr
-Node *Descompactador::createTree(int &iBitsTree, int &iLetter, int tam)
+Node * Descompactador::createTree(int &iBitsTree, int &iLetter, int tam)
 {
     /* iBitsTree recebe o índice do vetor de bits do percuro pré-ordem
     usado para reconstrução da árvore;
-    iLetter recebe o índice do vetor de letras presentes no arquivo (folhas da tree)*/
+    iLetter recebe o índice do vetor de letras presentes no arquivo (folhas da tree)
+    'tam' é o comprimento do vetor bitsTree, isto é, o número de nós da árvore*/
 
-    if (iBitsTree >= tam) // Verificação de segurança para evitar out-of-bounds
+    if (iBitsTree >= tam) // Para evitar segmentation fault
         return nullptr;
 
     if (bitsTree[iBitsTree] == 1)
-    {
-        ++iBitsTree;
-        return new Node(caracters[iLetter++], nullptr, nullptr, true);
+    {//se for nó folha, então
+        ++iBitsTree; 
+        return new Node(caracters[iLetter++], nullptr, nullptr, true); //retorna o nó folha criado
     }
     else
-    {
+    { // se não for, é nó interno
         Node *noh = new Node(0, nullptr, nullptr, false);
         ++iBitsTree;
         noh->setterLeft(createTree(iBitsTree, iLetter, tam));
         noh->setterRight(createTree(iBitsTree, iLetter, tam));
         return noh;
+    }
+}
+
+
+void Descompactador::writeDecode(Node *noh, Bits *obj)
+{
+    /*'count' conta o número de folhas que já foram visitadas
+    'bitFromFile' recebe um bit do arquivo compactado
+    'noh' recebe o nó da árvore que será visitado ou não
+    'obj' é uma instância da classe Bits para ler o arquivo, obtendo os bits*/
+    // na hora de chamar a função, já terá o primeiro obtem_bit
+    uint8_t bitFromFile;
+    Node *aux = noh;
+
+    for (uint8_t count = 0; count < this->T;)
+    {
+        bitFromFile = obj->obtem_bit();
+
+        if (aux->leaf) {
+            uint8_t byte = aux->c;
+            count = count + 1;
+            fwrite(&byte, sizeof(uint8_t), 1, fileWrite);
+            //fprintf(this->fileWrite, "%c", byte);
+            aux = noh;
+            
+        } else {
+            if (bitFromFile == 0) {
+                aux = aux->l;
+            } else {
+                aux = aux->r;
+            }
+        } 
     }
 }
 
@@ -234,21 +278,11 @@ Node::Node(uint8_t c, Node *l, Node *r, bool leaf) : c(c), l(l), r(r), leaf(leaf
 
 //retorna ptr do filho direito
 Node *Node::getterRight() {return this->r;}
-
-void Node::setterLeft(Node *no) {this->l = no;}
+void Node::setterRight(Node *no) {this->r = no;}
 
 //retorna ptr do filho esquerdo
 Node *Node::getterLeft() {return this->l;}
-
-void Node::setterRight(Node *no) {this->r = no;}
-
-/*Retorna true se é folha, e false se não
-bool Node::leaf() const {
-  if (this->l == nullptr && this->r == nullptr)
-    return true;
-  else
-    return false;
-}*/
+void Node::setterLeft(Node *no) {this->l = no;}
 
 //Retorna o caractere (em byte), presente numa folha
 uint8_t Node::getCode() {return this->c;}
